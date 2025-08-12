@@ -14,20 +14,29 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class ParallelMaxBot extends MinimaxBot{
-    public ParallelMaxBot(int depth, Heuristic<MinimaxState>... heuristics){
+    private final int numThreads;
+
+
+    public ParallelMaxBot(int depth,int numThreads, Heuristic<MinimaxState>... heuristics){
         super(depth, heuristics);
+        this.numThreads = Math.max(1,numThreads);
+    }
+
+    public ParallelMaxBot(int depth, int numThreads){
+        super(depth);
+        this.numThreads = Math.max(1,numThreads);
+    }
+
+    public ParallelMaxBot(int depth){
+        super(depth);
+        this.numThreads = Runtime.getRuntime().availableProcessors();
     }
 
     @Override
     public Move getMove(GameSnapshot gameState){
-        if (getDepth() <= 2) {
-            return super.getMove(gameState);
-        }
-
         MinimaxState initialState = new MinimaxState(gameState.getBoard());
 
         final MoveIterator moveIterator = new MoveIterator(initialState.getBoard());
-
 
         // creates a list of tasks to be executed by the executor
         List<Callable<Pair<Move, Float>>> tasks = new ArrayList<>();
@@ -45,7 +54,7 @@ public class ParallelMaxBot extends MinimaxBot{
         }
 
         //create thread pool with all available processors
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
         Move bestMove = null;
         float bestScore = -Float.MAX_VALUE;
 
@@ -77,5 +86,6 @@ public class ParallelMaxBot extends MinimaxBot{
 
     @Override
     public String getName(){return "ParallelMiniMaxBot (" + depth + ")";}
+
 
 }
